@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "lattice-app-backend"
+version = "0.1.0"
+description = "Lattice App Backend"
+authors = ["Tu Nombre"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.111.0"
+uvicorn = "^0.30.0"
+pydantic = "^2.7.0"
+python-jose = "^3.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
