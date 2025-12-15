@@ -1,0 +1,15 @@
+{
+  "realm": "lattice",
+  "enabled": true,
+  "sslRequired": "NONE",
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "clients": [],
+  "roles": {
+    "realm": [
+      { "name": "admin" },
+      { "name": "viewer" }
+    ]
+  }
+}
