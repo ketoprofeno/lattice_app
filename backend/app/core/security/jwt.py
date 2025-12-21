@@ -72,8 +72,10 @@ async def decode_and_validate(token: str) -> Principal:
     group_role_map = settings.rbac_group_role_map
     roles = {group_role_map[g] for g in groups if g in group_role_map}
 
+    sub = claims.get("sub") or claims.get("preferred_username") or ""
+
     return Principal(
-        sub=str(claims.get("sub", "")),
+        sub=str(sub),
         email=claims.get("email"),
         name=claims.get("name") or claims.get("preferred_username"),
         groups=[str(g) for g in groups],
