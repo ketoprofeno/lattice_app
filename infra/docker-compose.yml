@@ -13,11 +13,15 @@ services:
       - keycloak
 
   frontend:
-    build: ../frontend
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: http://localhost:8000/api
+        VITE_OIDC_URL: http://localhost:8080
+        VITE_OIDC_REALM: lattice
+        VITE_OIDC_CLIENT_ID: admin-app
     ports:
-      - "3000:80"
-    environment:
-      - VITE_API_URL=http://localhost:8000/api
+    - "3000:80"
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.1
