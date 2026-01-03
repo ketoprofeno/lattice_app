@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import axios from "axios";
 
 import keycloak from "./keycloak";
+import { startTokenRefresh, stopTokenRefresh } from "./tokenRefresh";
 import { AuthContext } from "./AuthContext";
 import type { User } from "./AuthContext";
 
@@ -26,24 +27,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(t);
         axios.defaults.headers.common["Authorization"] = `Bearer ${t}`;
 
-        const res = await axios.get(`${API_URL}/me`);
-        setUser(res.data);
+        try {
+          const res = await axios.get(`${API_URL}/me`);
+          setUser(res.data);
+        } catch (err) {
+          console.error("Error loading user profile", err);
+          keycloak.logout({ redirectUri: window.location.origin });
+          return;
+        }
+
+        startTokenRefresh();
         setLoading(false);
       })
       .catch(() => keycloak.login());
+
+    return () => {
+      stopTokenRefresh();
+    };
   }, []);
 
   const login = () => keycloak.login();
+
   const logout = () =>
     keycloak.logout({ redirectUri: window.location.origin });
 
   const hasRole = (roles: string[]) =>
-    !!user && roles.some((r) => user.roles.includes(r));
+    roles.some((r) => user?.roles?.includes(r));
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, hasRole }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        hasRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
