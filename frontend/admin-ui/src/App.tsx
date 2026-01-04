@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 
-import { AuthProvider } from "./auth/AuthProvider";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { AdminLayout } from "./layouts/AdminLayout";
-import { Home } from "./pages/Home";
-import Admin from "./pages/Admin";
+import { AuthProvider } from "./auth/AuthProvider"
+import { ProtectedRoute } from "./routes/ProtectedRoute"
+import { AdminLayout } from "./layouts/AdminLayout"
 
+import Dashboard from "./pages/Dashboard"
+import Admin from "./pages/Admin"
 
 export default function App() {
   return (
@@ -13,7 +13,14 @@ export default function App() {
       <BrowserRouter>
         <AdminLayout>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin"
               element={
@@ -26,5 +33,5 @@ export default function App() {
         </AdminLayout>
       </BrowserRouter>
     </AuthProvider>
-  );
+  )
 }
