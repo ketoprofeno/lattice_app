@@ -1,3 +1,7 @@
-export function Admin() {
-  return <div>Zona de administración</div>;
+export default function Admin() {
+  return (
+    <div className="p-6">
+      Admin page
+    </div>
+  );
 }

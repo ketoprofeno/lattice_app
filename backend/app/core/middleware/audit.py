@@ -15,6 +15,11 @@ logger = logging.getLogger("audit")
 
 class AuditMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+
+        # BYPASS OBLIGATORIO PARA PREFLIGHT CORS
+        if request.method == "OPTIONS":
+            return Response(status_code=200)
+
         rid = request.headers.get("X-Request-Id") or str(uuid.uuid4())
         set_request_id(rid)
 

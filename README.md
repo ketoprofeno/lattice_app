@@ -1,17 +1,18 @@
 # lattice_app
 
 **lattice_app** es una **admin application modular** diseñada como base reusable para proyectos de **analítica avanzada, data platforms y aplicaciones internas**.  
-El proyecto sigue una arquitectura desacoplada **Frontend + Backend**, está completamente **dockerizado** y preparado para escalar con **autenticación, RBAC y microservicios**.
+El proyecto sigue una arquitectura desacoplada **Frontend + Backend**, con separación clara entre **entorno de desarrollo (DEV)** y **entorno productivo (PROD)**, preparada para escalar con **autenticación, RBAC y microservicios**.
 
 ---
 
 ## 🧱 Arquitectura General
 
-- **Frontend**: React + TypeScript (Vite), servido con Nginx
+- **Frontend (DEV)**: React + TypeScript (Vite Dev Server)
+- **Frontend (PROD)**: Build estático servido por Nginx
 - **Backend**: FastAPI (Python), arquitectura modular
 - **Infraestructura**: Docker + Docker Compose
 - **Autenticación**: Keycloak (OIDC)
-- **Objetivo**: servir como **plantilla base** para admin apps modernas y productos de datos
+- **Objetivo**: servir como **plantilla base profesional** para admin apps modernas y productos de datos
 
 ```
 lattice_app/
@@ -29,22 +30,26 @@ lattice_app/
 - Python 3.11
 - FastAPI
 - Uvicorn
-- Poetry (gestión de dependencias)
 - Arquitectura modular por dominios
+- Middleware de auditoría
+- Preparado para RBAC y validación JWT
 
 ### Frontend
 - React 18
 - TypeScript
-- Vite
-- Nginx (producción)
+- Vite (DEV)
+- Tailwind CSS
+- Preparado para shadcn/ui
+- Nginx (PROD)
 
 ### Infraestructura
 - Docker
 - Docker Compose
+- Separación DEV / PROD
 
 ### Autenticación
 - Keycloak 25.x
-- OpenID Connect (OIDC)
+- OpenID Connect (Authorization Code + PKCE)
 - JWT
 
 ---
@@ -59,18 +64,13 @@ backend/
 │   ├── core/
 │   │   ├── config/
 │   │   ├── security/
-│   │   ├── rbac/
-│   │   ├── audit/
-│   │   └── api.py
+│   │   ├── middleware/
+│   │   └── logging/
 │   ├── modules/
-│   │   └── health/
-│   │       ├── router.py
-│   │       └── __init__.py
 │   ├── integrations/
 │   ├── main.py
 │   └── __init__.py
 ├── pyproject.toml
-├── poetry.lock
 └── Dockerfile
 ```
 
@@ -81,14 +81,15 @@ frontend/
 ├── admin-ui/
 │   ├── src/
 │   │   ├── auth/
-│   │   ├── components/
 │   │   ├── layouts/
+│   │   ├── routes/
 │   │   ├── pages/
-│   │   ├── services/
 │   │   └── main.tsx
-│   ├── index.html
-│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── vite.config.ts
 │   └── Dockerfile
+├── Dockerfile.dev
+└── nginx.conf
 ```
 
 ### Infraestructura
@@ -102,132 +103,114 @@ infra/
 
 ---
 
-## 🚀 Levantar el Proyecto Localmente
+## 🚀 Entornos de Ejecución
 
-### Requisitos
-- Docker
-- Docker Compose
+### 🧪 Desarrollo (DEV)
 
-### Ejecución
+- Frontend corre con **Vite** (hot reload)
+- Backend corre en FastAPI
+- Keycloak dockerizado
+- Comunicación vía proxy `/api`
 
-Desde la raíz del proyecto:
+Servicios DEV:
 
-```bash
-docker compose -f infra/docker-compose.yml up --build
+| Servicio  | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend  | http://localhost:8000 |
+| Keycloak | http://localhost:8080 |
+
+El frontend consume el backend usando rutas relativas:
+
 ```
+/api/*
+```
+
+Esto evita hardcodear URLs y permite transición limpia a PROD.
 
 ---
 
-## 🌐 Servicios Disponibles
+### 🏭 Producción (PROD)
 
-| Servicio  | URL                           | Descripción                    |
-|-----------|-------------------------------|--------------------------------|
-| Frontend  | http://localhost:3000         | Admin UI (React)               |
-| Backend   | http://localhost:8000/health  | API FastAPI (health check)     |
-| Keycloak  | http://localhost:8080/admin   | Consola de administración IAM  |
+- Frontend compilado (`npm run build`)
+- Servido por **Nginx**
+- Backend desacoplado
+- Variables de entorno controlan endpoints reales
 
-Respuesta esperada del backend:
-
-```json
-{"status":"ok"}
-```
+No se requieren cambios estructurales en el código para pasar de DEV a PROD.
 
 ---
 
-## 🔐 Autenticación y Autorización (Keycloak)
+## 🔐 Autenticación y Autorización
 
-El proyecto cuenta con una **base de autenticación centralizada** utilizando **Keycloak** en modo desarrollo, preparada para integrarse con el frontend (React) y el backend (FastAPI) mediante **OpenID Connect (OIDC)** y tokens JWT.
+### Autenticación (Auth)
 
-### 📌 Características
+- Gestionada por **Keycloak**
+- Login vía OIDC + PKCE
+- Token JWT compartido entre frontend y backend
+- Endpoint `/api/me` retorna identidad del usuario autenticado
 
-- Keycloak dockerizado como parte del stack
-- Arranque en modo desarrollo (`start-dev`)
-- Realm dedicado: `lattice`
-- Importación automática del realm al iniciar
-- Soporte HTTP para entorno local
-- Base para login, SSO y RBAC
+### Autorización (AuthZ)
 
-### 🗂️ Realm de desarrollo
+- **Frontend**:
+  - `ProtectedRoute` protege navegación y UX
+  - Basado en roles (`admin`, `viewer`)
+- **Backend**:
+  - Validación de roles se implementará en endpoints sensibles
+  - Separación clara entre identidad y permisos
 
-El realm `lattice` se importa automáticamente desde:
+> 📌 En etapa actual, la autorización backend se considera **deuda técnica controlada**, permitiendo avanzar en UI sin bloquear desarrollo.
+
+---
+
+## 🔐 Keycloak (DEV)
+
+Realm importado automáticamente desde:
 
 ```
 infra/keycloak/realm-dev.json
 ```
 
-Configuración destacada:
+Configuración:
+- Realm: `lattice`
+- Roles: `admin`, `viewer`
+- Usuario dev creado automáticamente
+- HTTP habilitado solo en DEV
 
-- `sslRequired = NONE` (solo desarrollo)
-- Roles iniciales:
-  - `admin`
-  - `viewer`
+Acceso consola:
 
-Esto permite un entorno **reproducible e idempotente**.
-
-### 🔑 Acceso al Admin Console
-
-```text
-URL:      http://localhost:8080/admin
-Usuario:  admin
-Password: admin
 ```
-
-> ⚠️ Credenciales solo para desarrollo local.
-
-### 🧭 Uso previsto
-
-Keycloak será utilizado para:
-
-- Autenticación del frontend vía OIDC (Authorization Code + PKCE)
-- Emisión de JWT
-- Validación de tokens en FastAPI
-- Implementación de RBAC basado en roles del realm
+http://localhost:8080/admin
+user: admin
+pass: admin
+```
 
 ---
 
 ## 🧠 Principios de Diseño
 
-- **Desacoplado**: Frontend y Backend independientes
-- **Modular**: backend organizado por dominios (`modules`)
-- **Escalable**: preparado para auth, RBAC, auditoría y microservicios
-- **Reutilizable**: base común para múltiples proyectos
-- **Infra-ready**: dockerizado y listo para CI/CD
+- Separación DEV / PROD clara
+- Frontend y backend desacoplados
+- Auth y AuthZ correctamente diferenciados
+- Modularidad y escalabilidad
+- Preparado para CI/CD y despliegues productivos
 
 ---
 
-## 🔐 Roadmap
+## 🛣️ Roadmap
 
-- Autenticación centralizada con Keycloak (OIDC) ✅
-- Integración JWT FastAPI ↔ Keycloak ⏳
-- RBAC (roles y permisos) ⏳
-- Layout admin base (sidebar + header)
+- Autenticación OIDC completa ✅
+- Admin UI base (layout + navegación) ✅
+- RBAC backend ⏳
 - Persistencia (PostgreSQL)
-- Auditoría y trazabilidad
-- Observabilidad y métricas
-- CI/CD y despliegue en entornos productivos
-
----
-
-## 📄 Documentación
-
-- Arquitectura general: `docs/architecture.md`
-- Autenticación y seguridad: en progreso
-
----
-
-## 🧩 Convención de Commits (recomendada)
-
-```text
-feat: nueva funcionalidad
-fix: corrección de bug
-chore: tareas de mantenimiento
-docs: documentación
-refactor: refactorización sin cambio funcional
-```
+- Auditoría avanzada
+- Observabilidad
+- CI/CD
+- Despliegue productivo
 
 ---
 
 ## 👤 Autor
 
 **Lattice**  
-Base para soluciones de ingeniería, analítica avanzada y productos de datos.
+Base profesional para soluciones de ingeniería, analítica avanzada y productos de datos.

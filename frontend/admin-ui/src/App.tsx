@@ -4,7 +4,8 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { Home } from "./pages/Home";
-import { Admin } from "./pages/Admin";
+import Admin from "./pages/Admin";
+
 
 export default function App() {
   return (

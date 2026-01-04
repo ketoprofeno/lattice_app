@@ -19,18 +19,25 @@
       "name": "Lattice Admin App",
       "enabled": true,
       "protocol": "openid-connect",
+
       "publicClient": true,
       "bearerOnly": false,
+
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
 
-      "rootUrl": "http://localhost:3000",
-      "baseUrl": "http://localhost:3000",
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:5173",
 
       "redirectUris": [
+        "http://localhost:5173/*",
         "http://localhost:3000/*"
       ],
+
       "webOrigins": [
+        "http://localhost:5173",
         "http://localhost:3000"
       ],
 
@@ -39,6 +46,7 @@
         "email",
         "roles"
       ],
+
       "optionalClientScopes": [],
 
       "protocolMappers": [

@@ -11,6 +11,22 @@ services:
       - "8000:8000"
     depends_on:
       - keycloak
+      
+  frontend-dev:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ../frontend/admin-ui:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_URL=http://localhost:8000/api
+      - VITE_OIDC_URL=http://localhost:8080
+      - VITE_OIDC_REALM=lattice
+      - VITE_OIDC_CLIENT_ID=admin-app
+    ports:
+      - "5173:5173"
 
   frontend:
     build:
